@@ -10,3 +10,6 @@
 [submodule "0g-da-encoder"]
 	path = 0g-da-encoder
 	url = https://github.com/0glabs/0g-da-encoder.git
+[submodule "contracts-0G/lib/openzeppelin-contracts"]
+	path = contracts-0G/lib/openzeppelin-contracts
+	url = https://github.com/openzeppelin/openzeppelin-contracts

@@ -102,7 +102,18 @@ export class VideoScene extends Phaser.Scene {
         const scaleY = this.scale.height / (video.height || this.scale.height);
         const scale = Math.min(scaleX, scaleY) * zoomOutFactor;
         video.setScale(scale).setScrollFactor(0);
-        video.play(false);
+        
+        const playVideo = () => {
+          if (this.scene.isActive()) {
+            video.play(false);
+            if (video.video) {
+              video.video.play().catch(err => {
+                if (err.name !== 'AbortError') console.warn("Video play error:", err);
+              });
+            }
+          }
+        };
+        playVideo();
         video.once('complete', () => {
             this.showDialogue();
         });

@@ -1,6 +1,6 @@
 import * as Phaser from "phaser";
 import { AvatarUtils } from "../utils/avatarUtils.js";
-import { startNewGame, getConversation } from "../api.js";
+import { startNewGame, getConversation, mintItem } from "../api.js";
 import { CHAIN_ID, RPC_URL } from "../contractConfig.js";
 export class HomeScene extends Phaser.Scene {
   constructor() {
@@ -21,7 +21,6 @@ export class HomeScene extends Phaser.Scene {
     this.resetTimer = null;
     this.initialPlayerPos = { x: 1.3, y: 5 };
     this.resetFeedbackText = null;
-    this.suiClient = null;
     this.account = null;
     this.userAvatar = null;
     this.playerInventory = new Set();
@@ -118,7 +117,7 @@ export class HomeScene extends Phaser.Scene {
     loadingPanel.strokeRoundedRect(panelX + 2, panelY + 2, panelWidth - 4, panelHeight - 4, 23);
 
     // Game title
-    const gameTitle = this.add.text(width / 2, panelY + 60, 'Echoes of the Village', {
+    const gameTitle = this.add.text(width / 2, panelY + 60, 'Beyond The Fog', {
       fontFamily: 'Georgia, serif',
       fontSize: '36px',
       color: '#d4af37',
@@ -194,7 +193,7 @@ export class HomeScene extends Phaser.Scene {
         progressBar.clear();
 
         // Main progress bar with gradient effect
-        progressBar.fillGradientStyle(0x4CAF50, 0x2E7D32, 0x81C784, 0x66BB6A, 1);
+        progressBar.fillGradientStyle(0x2dd4bf, 0x14b8a6, 0x5eead4, 0x2dd4bf, 1);
         const padding = 3;
         const progressWidth = (progressBarWidth - padding * 2) * progress;
         progressBar.fillRoundedRect(
@@ -240,6 +239,8 @@ export class HomeScene extends Phaser.Scene {
     console.log("diffulty - ", this.difficulty);
 
     const { game_id, inaccessible_locations, villagers } = await startNewGame(this.difficulty);
+    
+    if (!this.scene.isActive()) return;
 
     // Complete the progress bar with final animation
     progressTimer.destroy();
@@ -1283,7 +1284,7 @@ export class HomeScene extends Phaser.Scene {
   }
 
   async mintItem(itemName) {
-    if (!this.suiClient || !this.account) {
+    if (!this.signer || !this.account) {
       console.error("Wallet not connected, cannot mint.");
       return;
     }
@@ -1294,36 +1295,23 @@ export class HomeScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(101);
 
     try {
-      const tx = new Transaction();
-      tx.moveCall({
-        target: `${PACKAGE_ID}::${MODULE_NAME}::mint_item`, // use central module name
-        arguments: [
-          tx.pure.address(this.account),
-          tx.pure(Array.from(new TextEncoder().encode(itemName)), 'vector<u8>'),
-        ],
-      });
+      const result = await mintItem(this.account, itemName);
+      
+      if (result.success) {
+        console.log("Mint successful!", result);
+        mintingStatusText.setText(`${itemName} minted successfully!`);
+        this.playerInventory.add(itemName);
+        await this.updateInventory();
 
-      const result = await window.onechainWallet.signAndExecuteTransaction({
-        transaction: tx,
-      });
-
-      console.log("Mint successful!", result);
-      mintingStatusText.setText(`${itemName} minted successfully!`);
-
-      // Immediately update the inventory state
-      this.playerInventory.add(itemName);
-
-      // Update the blockchain inventory to confirm
-      await this.updateInventory();
-
-      // Update the current mint zone text if player is still in it
-      if (this.activeMintZone && this.activeMintZone.itemName === itemName) {
-        this.updateMintZoneText(itemName);
+        if (this.activeMintZone && this.activeMintZone.itemName === itemName) {
+          this.updateMintZoneText(itemName);
+        }
+      } else {
+          throw new Error(result.error || "Backend minting failed");
       }
-
     } catch (error) {
       console.error("Minting failed:", error);
-      mintingStatusText.setText(`Minting failed. See console for details.`);
+      mintingStatusText.setText(`Minting failed: ${error.message}`);
     } finally {
       this.time.delayedCall(2000, () => {
         mintingStatusText.destroy();
@@ -1333,32 +1321,25 @@ export class HomeScene extends Phaser.Scene {
   }
 
   async updateInventory() {
-    if (!this.suiClient || !this.account) return;
+    if (!this.provider || !this.account) return;
 
     try {
-      const itemNftType = itemNftStructType();
-      const objects = await this.suiClient.getOwnedObjects({
-        owner: this.account,
-        filter: { StructType: itemNftType },
-        options: { showContent: true },
-      });
-
-      // Clear and rebuild inventory from blockchain
+      const { GAME_ITEMS_ADDRESS, GAME_ITEMS_ABI } = await import("../contractConfig.js");
+      const contract = new ethers.Contract(GAME_ITEMS_ADDRESS, GAME_ITEMS_ABI, this.provider);
+      
+      const itemMap = { "RUSTY_KEY": 0, "FOG_LANTERN": 1, "ANCIENT_MAP": 2 };
       this.playerInventory.clear();
 
-      objects.data.forEach(item => {
-        if (item.data?.content?.fields) {
-          const itemName = String.fromCharCode.apply(null, item.data.content.fields.name);
-          this.playerInventory.add(itemName);
+      for (const [name, id] of Object.entries(itemMap)) {
+        const balance = await contract.balanceOf(this.account, id);
+        if (balance > 0n) {
+          this.playerInventory.add(name);
         }
-      });
+      }
 
-      // **NEW: Also add any pending items that might not be on-chain yet**
       const pendingItems = this.registry.get('pendingInventoryItems') || [];
       pendingItems.forEach(item => this.playerInventory.add(item));
-      if (pendingItems.length > 0) {
-        this.registry.set('pendingInventoryItems', []);
-      }
+      this.registry.set('pendingInventoryItems', []);
 
       console.log('Updated inventory:', Array.from(this.playerInventory));
     } catch (error) {

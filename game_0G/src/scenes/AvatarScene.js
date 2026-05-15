@@ -28,7 +28,27 @@ export class AvatarScene extends Phaser.Scene {
     const height = this.cameras.main.height;
 
     const bgVideo = this.add.video(width / 2, height / 2, 'bg04_animated');
-    bgVideo.play(true);
+    
+    // Safety wrapper for video play to avoid "interrupted by call to pause" errors
+    const playVideo = () => {
+      if (this.scene.isActive()) {
+        bgVideo.play(true);
+        if (bgVideo.video) {
+          bgVideo.video.play().catch(err => {
+            if (err.name !== 'AbortError') console.warn("Video play error:", err);
+          });
+        }
+      }
+    };
+
+    if (this.sys.game.device.os.desktop) {
+        playVideo();
+    } else {
+        // Mobile often needs more explicit interaction or delay
+        this.input.once('pointerdown', playVideo);
+        playVideo(); // Try anyway
+    }
+    
     bgVideo.setScale(0.45).setScrollFactor(0).setOrigin(0.5);
 
     this.add.rectangle(0, 0, width, height, 0x000000, 0.7).setOrigin(0);
@@ -120,12 +140,14 @@ export class AvatarScene extends Phaser.Scene {
   }
 
   startGame() {
-    this.scene.start("MenuScene", {
-      provider: this.provider,
-      signer: this.signer,
-      account: this.account,
-      userAvatar: { avatarId: this.selectedAvatarId }
-    });
+    if (this.scene.isActive()) {
+      this.scene.start("MenuScene", {
+        provider: this.provider,
+        signer: this.signer,
+        account: this.account,
+        userAvatar: { avatarId: this.selectedAvatarId }
+      });
+    }
   }
 }
 

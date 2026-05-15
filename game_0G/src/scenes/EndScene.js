@@ -1,6 +1,4 @@
-// undo 01
 import * as Phaser from "phaser";
-import { ethers } from 'ethers';
 import { submitGameResult } from '../api';
 
 export class EndScene extends Phaser.Scene {
@@ -17,50 +15,67 @@ export class EndScene extends Phaser.Scene {
     }
 
     create() {
-        this.cameras.main.fadeIn(800, 0, 0, 0);
-        this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.85).setOrigin(0);
+        this.cameras.main.fadeIn(1000, 0, 0, 0);
+        this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x050505, 0.95).setOrigin(0);
 
         const centerX = this.cameras.main.centerX;
         const centerY = this.cameras.main.centerY;
 
-        const titleText = this.endGameData.isCorrect ? 'Mystery Solved!' : 'Case Closed...';
-        const titleColor = this.endGameData.isCorrect ? '#2ecc71' : '#e74c3c';
+        const titleText = this.endGameData.isCorrect ? 'MYSTERY SOLVED' : 'LOST IN THE FOG';
+        const titleColor = this.endGameData.isCorrect ? '#2dd4bf' : '#e74c3c';
 
-        this.add.text(centerX, centerY - 200, titleText, {
-            fontFamily: 'Georgia, serif',
-            fontSize: '64px',
+        // Title with Cinzel font
+        this.add.text(centerX, centerY - 220, titleText, {
+            fontFamily: 'Cinzel',
+            fontSize: '72px',
             color: titleColor,
             stroke: '#000000',
-            strokeThickness: 4
+            strokeThickness: 2,
+            letterSpacing: 4
         }).setOrigin(0.5);
 
+        // Decorative line
+        const graphics = this.add.graphics();
+        graphics.lineStyle(2, 0x2dd4bf, 0.3);
+        graphics.lineBetween(centerX - 200, centerY - 150, centerX + 200, centerY - 150);
+
         const stats = [
-            `Final Score: ${this.endGameData.score}`,
-            `Total Time: ${this.endGameData.time}`,
-            `Total Guesses: ${this.endGameData.guesses}`
+            `SCORE: ${this.endGameData.score}`,
+            `TIME: ${this.endGameData.time}`,
+            `GUESSES: ${this.endGameData.guesses}`,
+            `TRUE ENDING: ${this.endGameData.isTrueEnding ? 'YES' : 'NO'}`
         ];
 
         this.add.text(centerX, centerY, stats, {
-            fontFamily: 'Arial',
-            fontSize: '32px',
-            color: '#ffffff',
+            fontFamily: 'Inter',
+            fontSize: '24px',
+            color: '#aaaaaa',
             align: 'center',
-            lineSpacing: 20
+            lineSpacing: 15,
+            letterSpacing: 2
         }).setOrigin(0.5);
 
-        const menuButton = this.add.text(centerX, centerY + 180, 'Return to Menu', {
-            fontSize: '28px',
-            fill: '#2ecc71',
-            padding: { x: 20, y: 10 }
+        // Status Text
+        this.statusText = this.add.text(centerX, centerY + 140, 'SYNCHRONIZING WITH 0G NEWTON...', {
+            fontFamily: 'Inter',
+            fontSize: '14px',
+            color: '#2dd4bf',
+            letterSpacing: 2
+        }).setOrigin(0.5);
+
+        // Menu Button
+        const menuButton = this.add.text(centerX, centerY + 240, 'RETURN TO THE VOID', {
+            fontFamily: 'Cinzel',
+            fontSize: '24px',
+            color: '#000000',
+            backgroundColor: '#2dd4bf',
+            padding: { x: 40, y: 15 }
         })
         .setOrigin(0.5)
         .setInteractive({ useHandCursor: true })
-        .on('pointerdown', () => window.location.reload());
-
-        this.statusText = this.add.text(centerX, centerY + 260, 'Finalizing your journey on 0G...', {
-            fontSize: '18px',
-            fill: '#d4af37'
-        }).setOrigin(0.5);
+        .on('pointerdown', () => window.location.reload())
+        .on('pointerover', () => menuButton.setBackgroundColor('#ffffff'))
+        .on('pointerout', () => menuButton.setBackgroundColor('#2dd4bf'));
 
         if (this.account) {
             this.finalizeGame();
@@ -72,25 +87,28 @@ export class EndScene extends Phaser.Scene {
         this.isProcessing = true;
 
         try {
-            this.statusText.setText('Anchoring dialogue to 0G Storage...');
+            this.statusText.setText('ANCHORING JOURNEY TO 0G STORAGE...');
             
             const result = await submitGameResult({
                 game_id: this.endGameData.gameSessionId,
                 user_address: this.account,
                 score: this.endGameData.score,
-                won: this.endGameData.isCorrect
+                won: this.endGameData.isCorrect,
+                is_true_ending: this.endGameData.isTrueEnding
             });
 
             if (result.success) {
-                this.statusText.setText(`✓ Journey anchored to 0G! Reward: ${result.reward || 0} FOG`);
-                this.statusText.setColor('#2ecc71');
+                const reward = (result.reward / 1e18).toFixed(2);
+                this.statusText.setText(`✓ JOURNEY ANCHORED. REWARD: ${reward} FOG DISTRIBUTED.`);
+                this.statusText.setColor('#2dd4bf');
             } else {
-                this.statusText.setText('Failed to anchor journey to 0G.');
+                this.statusText.setText('PROTOCOL ERROR: FAILED TO ANCHOR JOURNEY.');
                 this.statusText.setColor('#e74c3c');
             }
         } catch (error) {
             console.error("Finalization failed:", error);
-            this.statusText.setText('Error finalizing journey.');
+            this.statusText.setText('CRITICAL ERROR: CONNECTION TO 0G LOST.');
+            this.statusText.setColor('#e74c3c');
         } finally {
             this.isProcessing = false;
         }

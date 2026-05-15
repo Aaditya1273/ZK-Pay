@@ -30,7 +30,19 @@ export class MenuScene extends Phaser.Scene {
     const height = this.cameras.main.height;
 
     const bgVideo = this.add.video(width / 2, height / 2, 'bg04_animated');
-    bgVideo.play(true);
+    
+    const playVideo = () => {
+      if (this.scene.isActive()) {
+        bgVideo.play(true);
+        if (bgVideo.video) {
+          bgVideo.video.play().catch(err => {
+            if (err.name !== 'AbortError') console.warn("Video play error:", err);
+          });
+        }
+      }
+    };
+    playVideo();
+
     bgVideo.setScale(0.45).setScrollFactor(0).setOrigin(0.5);
 
     this.add.rectangle(0, 0, width, height, 0x000000, 0.7).setOrigin(0);
@@ -46,7 +58,7 @@ export class MenuScene extends Phaser.Scene {
     panel.lineStyle(4, 0xd4af37, 1);
     panel.strokeRoundedRect(panelX, panelY, panelWidth, panelHeight, 25);
 
-    this.add.text(width / 2, panelY + 60, "Echoes of the Village", {
+    this.add.text(width / 2, panelY + 60, "Beyond The Fog", {
       fontFamily: "Georgia, serif",
       fontSize: "48px",
       color: "#ffffff",
@@ -124,16 +136,20 @@ export class MenuScene extends Phaser.Scene {
     button.setInteractive({ useHandCursor: true });
 
     button.on("pointerover", () => {
+      if (!this.scene.isActive()) return;
       bg.clear().fillStyle(0x444444, 1).fillRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 15);
-      this.tweens.add({ targets: button, scale: 1.05, duration: 150 });
+      if (this.tweens) this.tweens.add({ targets: button, scale: 1.05, duration: 150 });
     });
 
     button.on("pointerout", () => {
+      if (!this.scene.isActive()) return;
       bg.clear().fillStyle(0x333333, 1).fillRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 15);
-      this.tweens.add({ targets: button, scale: 1, duration: 150 });
+      if (this.tweens) this.tweens.add({ targets: button, scale: 1, duration: 150 });
     });
 
-    button.on("pointerdown", callback);
+    button.on("pointerdown", () => {
+      if (this.scene.isActive()) callback();
+    });
     return button;
   }
 

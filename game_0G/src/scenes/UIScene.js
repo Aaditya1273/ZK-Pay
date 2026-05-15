@@ -9,7 +9,6 @@ export class UIScene extends Phaser.Scene {
     this.elapsedSeconds = 0;
     this.inaccessibleLocations = [];
     this.account = null;
-    this.suiClient = null;
     this.difficulty = "Easy";
     this._locationOverlay = null;
     this.locationButton = null;
@@ -37,11 +36,12 @@ export class UIScene extends Phaser.Scene {
         this.cameras.main.height - 70,
         this.formatTime(this.elapsedSeconds),
         {
-          fontFamily: "Arial",
-          fontSize: "24px",
-          color: "#d4af37",
+          fontFamily: "Cinzel",
+          fontSize: "28px",
+          color: "#2dd4bf",
           stroke: "#000000",
-          strokeThickness: 4,
+          strokeThickness: 2,
+          letterSpacing: 2
         }
       )
       .setOrigin(0.5);
@@ -80,12 +80,12 @@ export class UIScene extends Phaser.Scene {
 
   createLocationButton() {
     const button = this.add
-      .text(150, this.cameras.main.height - 70, "Choose Location", {
-        fontFamily: "Arial",
-        fontSize: "24px",
-        color: "#A9A9A9",
-        backgroundColor: "#555555",
-        padding: { x: 15, y: 8 },
+      .text(150, this.cameras.main.height - 70, "INVESTIGATE", {
+        fontFamily: "Cinzel",
+        fontSize: "20px",
+        color: "#ffffff",
+        backgroundColor: "#1a1a1a",
+        padding: { x: 20, y: 12 },
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
@@ -100,12 +100,14 @@ export class UIScene extends Phaser.Scene {
 
     button.on("pointerover", () => {
       if (this.locationButtonEnabled) {
-        button.setBackgroundColor("#f5d56b");
+        button.setBackgroundColor("#2dd4bf");
+        button.setColor("#000000");
       }
     });
     button.on("pointerout", () => {
       if (this.locationButtonEnabled) {
-        button.setBackgroundColor("#d4af37");
+        button.setBackgroundColor("#1a1a1a");
+        button.setColor("#ffffff");
       }
     });
     this.locationButton = button;
@@ -148,10 +150,10 @@ export class UIScene extends Phaser.Scene {
 
     const panel = this.add
       .graphics()
-      .fillStyle(0x1a1a1a, 0.95)
-      .fillRoundedRect(panelX, panelY, panelWidth, panelHeight, 15)
-      .lineStyle(2, 0xd4af37, 1)
-      .strokeRoundedRect(panelX, panelY, panelWidth, panelHeight, 15);
+      .fillStyle(0x050505, 0.98)
+      .fillRoundedRect(panelX, panelY, panelWidth, panelHeight, 20)
+      .lineStyle(2, 0x2dd4bf, 0.5)
+      .strokeRoundedRect(panelX, panelY, panelWidth, panelHeight, 20);
 
     const title = this.add
       .text(width / 2, panelY + 40, "Choose a Location to Investigate", {
@@ -165,14 +167,14 @@ export class UIScene extends Phaser.Scene {
       (location, index) => {
         const buttonY = panelY + 90 + index * 60;
         const button = this.add
-          .text(width / 2, buttonY, location, {
-            fontFamily: "Arial",
-            fontSize: "20px",
-            color: "#000000",
-            backgroundColor: "#d4af37",
-            padding: { x: 20, y: 10 },
+          .text(width / 2, buttonY, location.toUpperCase(), {
+            fontFamily: "Inter",
+            fontSize: "18px",
+            color: "#ffffff",
+            backgroundColor: "rgba(255,255,255,0.05)",
+            padding: { x: 20, y: 12 },
             align: "center",
-            fixedWidth: 300,
+            fixedWidth: 320,
           })
           .setOrigin(0.5)
           .setInteractive({ useHandCursor: true });
@@ -340,11 +342,11 @@ export class UIScene extends Phaser.Scene {
         this.cameras.main.height - 70,
         "Inventory",
         {
-          fontFamily: "Arial",
-          fontSize: "24px",
-          color: "#000000",
-          backgroundColor: "#d4af37",
-          padding: { x: 15, y: 8 },
+          fontFamily: "Cinzel",
+          fontSize: "20px",
+          color: "#ffffff",
+          backgroundColor: "#1a1a1a",
+          padding: { x: 20, y: 12 },
         }
       )
       .setOrigin(0.5)

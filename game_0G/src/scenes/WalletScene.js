@@ -19,100 +19,133 @@ export class WalletScene extends Phaser.Scene {
   preload() {
     this.load.video("bg_video", "assets/cut-scene/bg04_animated.mp4", "loadeddata", false, true);
     this.load.audio("intro_music", "assets/music/intro_music.MP3");
-    this.load.image("gaming_frame", "assets/images/ui/gaming_frame.png");
   }
 
   create() {
-    const framePadding = 20;
-    const frameWidth = this.cameras.main.width - framePadding * 2;
-    const frameHeight = this.cameras.main.height - framePadding * 2;
-    const cornerRadius = 30;
-
-    const maskShape = this.make.graphics();
-    maskShape.fillStyle(0xffff00);
-    maskShape.fillRoundedRect(framePadding, framePadding, frameWidth, frameHeight, cornerRadius);
-    this.cameras.main.setMask(maskShape.createGeometryMask());
-
-    const frame = this.add.graphics();
-    frame.lineStyle(10, 0xd4af37, 1);
-    frame.strokeRoundedRect(framePadding, framePadding, frameWidth, frameHeight, cornerRadius);
-    frame.setDepth(100);
-    
     const centerX = this.cameras.main.width / 2;
     const centerY = this.cameras.main.height / 2;
 
+    // Background Video
     const bgVideo = this.add.video(centerX, centerY, "bg_video");
-    bgVideo.play(true);
-    bgVideo.setScale(0.45).setScrollFactor(0).setOrigin(0.5);
     
-    this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.7).setOrigin(0);
+    const playVideo = () => {
+      if (this.scene.isActive()) {
+        bgVideo.play(true);
+        if (bgVideo.video) {
+          bgVideo.video.play().catch(err => {
+            if (err.name !== 'AbortError') console.warn("Video play error:", err);
+          });
+        }
+      }
+    };
+    playVideo();
 
-    const panelWidth = 500;
-    const panelHeight = 400;
-    this.add.graphics()
-      .fillStyle(0x1a1a1a, 0.9)
-      .fillRoundedRect(centerX - panelWidth / 2, centerY - panelHeight / 2, panelWidth, panelHeight, 20)
-      .lineStyle(2, 0xd4af37, 1)
-      .strokeRoundedRect(centerX - panelWidth / 2, centerY - panelHeight / 2, panelWidth, panelHeight, 20);
+    bgVideo.setScale(0.5).setScrollFactor(0).setOrigin(0.5);
+    
+    // Darker Overlay for cinematic feel
+    this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.8).setOrigin(0);
 
-    this.add.text(centerX, centerY - 120, "Connect Your Wallet", {
-      fontFamily: "Georgia, serif",
-      fontSize: "40px",
+    // Glass Panel Effect
+    const panelWidth = 600;
+    const panelHeight = 450;
+    const graphics = this.add.graphics();
+    
+    // Outer Glow
+    graphics.lineStyle(1, 0x2dd4bf, 0.2);
+    graphics.strokeRoundedRect(centerX - panelWidth / 2 - 10, centerY - panelHeight / 2 - 10, panelWidth + 20, panelHeight + 20, 30);
+
+    // Main Panel
+    graphics.fillStyle(0x050505, 0.95);
+    graphics.fillRoundedRect(centerX - panelWidth / 2, centerY - panelHeight / 2, panelWidth, panelHeight, 25);
+    
+    // Teal Border
+    graphics.lineStyle(2, 0x2dd4bf, 0.5);
+    graphics.strokeRoundedRect(centerX - panelWidth / 2, centerY - panelHeight / 2, panelWidth, panelHeight, 25);
+
+    // Title using Cinzel
+    this.add.text(centerX, centerY - 140, "INITIALIZE IDENTITY", {
+      fontFamily: "Cinzel",
+      fontSize: "42px",
       color: "#ffffff",
+      stroke: "#000000",
+      strokeThickness: 2,
+      letterSpacing: 6
+    }).setOrigin(0.5);
+
+    this.add.text(centerX, centerY - 80, "PROTOCOL: 0G NEWTON TESTNET", {
+      fontFamily: "Inter",
+      fontSize: "12px",
+      color: "#2dd4bf",
+      letterSpacing: 4
+    }).setOrigin(0.5);
+
+    // Subtitle
+    this.add.text(centerX, centerY - 20, "Your journey is anchored by decentralized consensus.", {
+      fontFamily: "Inter",
+      fontSize: "16px",
+      color: "#888888",
       align: "center"
     }).setOrigin(0.5);
 
-    this.createButton(centerX, centerY + 20, 'Connect MetaMask', () => this.connectWallet());
+    this.createButton(centerX, centerY + 80, 'CONNECT METAMASK', () => this.connectWallet());
+    
+    // Version Text
+    this.add.text(centerX, centerY + 180, "VER. 1.0.4-PROD", {
+      fontFamily: "Inter",
+      fontSize: "10px",
+      color: "#333333",
+      letterSpacing: 2
+    }).setOrigin(0.5);
   }
 
   createButton(x, y, text, callback) {
-    const buttonWidth = 320;
-    const buttonHeight = 60;
+    const buttonWidth = 360;
+    const buttonHeight = 70;
     const button = this.add.container(x, y);
 
     const bg = this.add.graphics()
-      .fillStyle(0x333333, 1)
-      .fillRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 15);
-
-    const border = this.add.graphics()
-      .lineStyle(2, 0xd4af37, 1)
-      .strokeRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 15);
+      .fillStyle(0x2dd4bf, 1)
+      .fillRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 35);
 
     const txt = this.add.text(0, 0, text, {
-      fontFamily: "Arial",
-      fontSize: "24px",
-      color: "#ffffff"
+      fontFamily: "Cinzel",
+      fontSize: "20px",
+      color: "#050505",
+      fontStyle: "bold",
+      letterSpacing: 2
     }).setOrigin(0.5);
 
-    button.add([bg, border, txt]);
+    button.add([bg, txt]);
     button.setSize(buttonWidth, buttonHeight);
     button.setInteractive({ useHandCursor: true });
 
     button.on("pointerover", () => {
-      bg.clear().fillStyle(0x444444, 1).fillRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 15);
-      this.tweens.add({ targets: button, scale: 1.05, duration: 150 });
+      if (!this.scene.isActive()) return;
+      bg.clear().fillStyle(0xffffff, 1).fillRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 35);
+      if (this.tweens) this.tweens.add({ targets: button, scale: 1.05, duration: 150 });
     });
 
     button.on("pointerout", () => {
-      bg.clear().fillStyle(0x333333, 1).fillRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 15);
-      this.tweens.add({ targets: button, scale: 1, duration: 150 });
+      if (!this.scene.isActive()) return;
+      bg.clear().fillStyle(0x2dd4bf, 1).fillRoundedRect(-buttonWidth / 2, -buttonHeight / 2, buttonWidth, buttonHeight, 35);
+      if (this.tweens) this.tweens.add({ targets: button, scale: 1, duration: 150 });
     });
 
-    button.on("pointerdown", callback);
+    button.on("pointerdown", () => {
+      if (this.scene.isActive()) callback();
+    });
     return button;
   }
 
   async connectWallet() {
     pingServer();
     if (!window.ethereum) {
-      alert("MetaMask not found! Please install MetaMask to play.");
+      alert("METAMASK NOT DETECTED. PLEASE INSTALL TO PROCEED.");
       return;
     }
 
     try {
       this.provider = new ethers.BrowserProvider(window.ethereum);
-      
-      // Request accounts
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       this.userAddress = accounts[0];
       this.signer = await this.provider.getSigner();
@@ -138,12 +171,12 @@ export class WalletScene extends Phaser.Scene {
         }
       }
 
-      console.log("Connected to 0G:", this.userAddress);
+      console.log("AUTHORIZED IDENTITY:", this.userAddress);
       await this.handleUserRegistration();
 
     } catch (error) {
-      console.error("Connection failed:", error);
-      alert("Failed to connect wallet: " + error.message);
+      console.error("IDENTITY VALIDATION FAILED:", error);
+      alert("FAILED TO CONNECT: " + error.message);
     }
   }
 
@@ -153,18 +186,15 @@ export class WalletScene extends Phaser.Scene {
       const isRegistered = await contract.isUserRegistered(this.userAddress);
 
       if (isRegistered) {
-        console.log("User already registered.");
         this.proceedToGame();
       } else {
-        console.log("Registering user on 0G...");
         const tx = await contract.registerUser();
         await tx.wait();
-        console.log("Registration successful!");
         this.proceedToGame();
       }
     } catch (error) {
-      console.error("Registration error:", error);
-      alert("Registration failed. Please ensure you have testnet 0G tokens.");
+      console.error("REGISTRATION PROTOCOL FAILED:", error);
+      alert("REGISTRATION FAILED. ENSURE YOU HAVE TESTNET 0G TOKENS.");
     }
   }
 
