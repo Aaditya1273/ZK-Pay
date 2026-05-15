@@ -1,0 +1,39 @@
+{
+  "name": "echoes-of-the-village",
+  "version": "1.0.0",
+  "description": "Blockchain + AI Powered game",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@rainbow-me/rainbowkit": "^2.2.11",
+    "@tailwindcss/postcss": "^4.3.0",
+    "@tanstack/react-query": "^5.100.10",
+    "ethers": "^6.15.0",
+    "framer-motion": "latest",
+    "lucide-react": "latest",
+    "next": "latest",
+    "phaser": "^3.90.0",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-transition-group": "^4.4.5",
+    "tailwindcss": "latest",
+    "viem": "^2.49.2",
+    "wagmi": "^2.19.5"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "autoprefixer": "latest",
+    "eslint": "latest",
+    "eslint-config-next": "latest",
+    "postcss": "latest"
+  }
+}
