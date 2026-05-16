@@ -1,0 +1,22 @@
+{
+  "name": "The Dreamer",
+  "description": "Sees visions of a world beyond the fog in every slumber. Anchored on 0G.",
+  "attributes": [
+    {
+      "trait_type": "Class",
+      "value": "Mystic"
+    },
+    {
+      "trait_type": "Origin",
+      "value": "The Wreck"
+    }
+  ],
+  "minted_at": "2026-05-16T19:11:37.247239",
+  "owner": "0x5ab3036c7d0ba7043e0bb531374dc6c732ec4954",
+  "status": "Active",
+  "stage": "newborn",
+  "origin": "Beyond The Fog - 0G Galileo Testnet",
+  "image": "http://localhost:3002/assets/avatars/mc_7.png",
+  "external_url": "https://beyondthefog.0g.ai",
+  "erc_standard": "ERC-7857"
+}

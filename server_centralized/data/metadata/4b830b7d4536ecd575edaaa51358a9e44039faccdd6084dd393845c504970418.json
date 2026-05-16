@@ -1,0 +1,20 @@
+{
+  "name": "The Ghost",
+  "description": "A silent observer who moves through the fog like a phantom. Anchored on 0G.",
+  "attributes": [
+    {
+      "trait_type": "Class",
+      "value": "Stalker"
+    },
+    {
+      "trait_type": "Origin",
+      "value": "The Wreck"
+    }
+  ],
+  "minted_at": "2026-05-16T01:20:00.029060",
+  "owner": "0x5ab3036c7d0ba7043e0bb531374dc6c732ec4954",
+  "status": "Active",
+  "origin": "Beyond The Fog - 0G Galileo Testnet",
+  "image": "http://localhost:8000/assets/avatars/mc_4.png",
+  "external_url": "https://beyondthefog.0g.ai"
+}

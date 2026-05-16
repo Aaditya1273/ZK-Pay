@@ -1,18 +1,37 @@
-# game_logic/llm_calls.py
-# Contains the GeminiAPI class and all prompt engineering logic.
-
 import json
-import google.generativeai as genai
+import logging
+import time
+
+try:
+    from google import genai
+    from google.genai import types
+    GENAI_SDK = "google-genai"
+except ImportError:  # pragma: no cover - fallback for current envs
+    import google.generativeai as legacy_genai
+
+    genai = None
+    types = None
+    GENAI_SDK = "google-generativeai"
+
+logger = logging.getLogger(__name__)
 
 class GeminiAPI:
+    MODEL_ID = "gemini-2.0-flash-lite"
+    MAX_RETRIES = 3
+    RETRY_BACKOFF_SECONDS = (0.5, 1.0, 2.0)
+
     def __init__(self, api_key):
+        self.client = None
+        self.legacy_model = None
         try:
-            genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemini-2.5-flash-lite')
-            print("✅ Gemini API configured successfully.")
+            if GENAI_SDK == "google-genai":
+                self.client = genai.Client(api_key=api_key)
+            else:
+                legacy_genai.configure(api_key=api_key)
+                self.legacy_model = legacy_genai.GenerativeModel(self.MODEL_ID)
+            logger.info("Gemini API configured successfully with %s.", GENAI_SDK)
         except Exception as e:
-            print(f"❌ Error configuring Gemini API: {e}")
-            self.model = None
+            logger.error("Error configuring Gemini API: %s", e)
 
     def _clean_json_response(self, text_response):
         text_response = text_response.strip()
@@ -22,27 +41,50 @@ class GeminiAPI:
             text_response = text_response[:-3]
         return text_response.strip()
 
+    def _request_content(self, prompt: str):
+        if GENAI_SDK == "google-genai":
+            response = self.client.models.generate_content(
+                model=self.MODEL_ID,
+                contents=prompt,
+                config=types.GenerateContentConfig(response_mime_type="application/json"),
+            )
+            return response.text if response else None
+
+        response = self.legacy_model.generate_content(
+            prompt,
+            generation_config={"response_mime_type": "application/json"},
+        )
+        return getattr(response, "text", None)
+
     def generate_content(self, prompt_type, context):
-        if not self.model: return "{}"
-        print(f"\n--- 🤖 Live Gemini API Call ({prompt_type}) ---")
-        
+        if not self.client and not self.legacy_model:
+            return "{}"
+        logger.info("Live Gemini API call (%s).", prompt_type)
+
         prompts = {
             "StoryGenerator": self._create_story_generator_prompt,
             "WorldBuilder": self._create_world_builder_prompt,
             "Interaction": self._create_interaction_prompt,
         }
         prompt = prompts.get(prompt_type, lambda _: "")(context)
-        if not prompt: 
-            print(f"--- ERROR: No prompt found for type '{prompt_type}' ---")
+        if not prompt:
+            logger.error("No prompt found for type '%s'.", prompt_type)
             return "{}"
 
-        print("--- Sending Prompt to Gemini... (This may take a moment) ---")
-        try:
-            response = self.model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
-            return self._clean_json_response(response.text)
-        except Exception as e:
-            print(f"❌ An error occurred during the API call: {e}")
-            return "{}"
+        for attempt in range(1, self.MAX_RETRIES + 1):
+            try:
+                text = self._request_content(prompt)
+                if text:
+                    return self._clean_json_response(text)
+                logger.warning("Empty Gemini response for %s on attempt %s.", prompt_type, attempt)
+            except Exception as e:
+                logger.warning("Gemini call failed for %s on attempt %s: %s", prompt_type, attempt, e)
+
+            if attempt < self.MAX_RETRIES:
+                time.sleep(self.RETRY_BACKOFF_SECONDS[attempt - 1])
+
+        logger.error("Gemini call exhausted retries for %s.", prompt_type)
+        return None
 
     def _create_story_generator_prompt(self, context):
         return f"""
@@ -92,9 +134,9 @@ class GeminiAPI:
         elif difficulty == 'Hard':
             node_count = "35-40"
             key_clue_count = 6
-            final_clue_instruction = "The final clue must be extremely cryptic, requiring significant deduction."
-            difficulty_instructions = "Clues must be cryptic and often misleading. Use riddles and metaphors."
-            type_instruction = "Create a complex web using many 'TalkToVillager' nodes to interconnect clues."
+            final_clue_instruction = "The final clue must be extremely cryptic, requiring significant deduction. Never state the answer directly — only imply it through metaphor or symbol."
+            difficulty_instructions = "NPCs are deeply paranoid and hostile to strangers. Clues are cryptic, misleading, and often contradictory. One wrong approach permanently locks the player out of that NPC's clues forever — they will refuse to speak further."
+            type_instruction = "Create a complex web using many 'TalkToVillager' nodes. Most clues require high familiarity (4-5). At least 3 nodes must have preconditions that chain through other NPCs. Mark 2 nodes as 'trap' nodes that permanently exhaust the NPC if the player is rude or pushy."
         else: # Medium
             node_count = "25-30"
             key_clue_count = 4
@@ -168,6 +210,9 @@ class GeminiAPI:
            - If "Unknown", introduce yourself naturally.  
         6. Do not repeat information the player already knows: `{context['player_knowledge_summary']}`.  
         7. If a clue is revealed, weave it in *naturally with flavor*, not as a raw fact dump.
+        8. HARD MODE RULE: If the player is rude, aggressive, threatening, or pushes too hard,
+           the NPC PERMANENTLY shuts down. Set conversational_status to PERMANENTLY_EXHAUSTED
+           immediately and never reveal any more clues to this player. One strike — no second chances.
 
         **NOTE: Whenver mentioned this is the staring prompt of the conversation, then just introduce yourself if familarity:Unknown or talk about the recent thing that you discoverd with that villager from the knowledges-summary**
 

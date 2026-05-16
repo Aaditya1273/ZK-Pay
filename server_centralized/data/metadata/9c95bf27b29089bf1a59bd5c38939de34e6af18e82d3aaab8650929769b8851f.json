@@ -1,0 +1,20 @@
+{
+  "name": "The Flame",
+  "description": "Possesses a fiery spirit that refuses to be extinguished by the gloom. Anchored on 0G.",
+  "attributes": [
+    {
+      "trait_type": "Class",
+      "value": "Brawler"
+    },
+    {
+      "trait_type": "Origin",
+      "value": "The Wreck"
+    }
+  ],
+  "minted_at": "2026-05-16T01:20:00.046220",
+  "owner": "0x5ab3036c7d0ba7043e0bb531374dc6c732ec4954",
+  "status": "Active",
+  "origin": "Beyond The Fog - 0G Galileo Testnet",
+  "image": "http://localhost:8000/assets/avatars/mc_5.png",
+  "external_url": "https://beyondthefog.0g.ai"
+}

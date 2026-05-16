@@ -62,3 +62,56 @@ VILLAGER_ROSTER = [
 ]
 
 FAMILIARITY_LEVELS = {0: "Unknown", 1: "Stranger", 2: "Acquaintance", 3: "Familiar Face", 4: "Ally", 5: "Confidant"}
+
+AVATAR_NFT_METADATA = {
+    "mc_1": {
+        "name": "The Scout",
+        "description": "A keen-eyed explorer with a knack for finding hidden paths. Anchored on 0G.",
+        "attributes": [{"trait_type": "Class", "value": "Scout"}, {"trait_type": "Origin", "value": "The Wreck"}]
+    },
+    "mc_2": {
+        "name": "The Wanderer",
+        "description": "A solitary figure who has traveled far beyond the fog. Anchored on 0G.",
+        "attributes": [{"trait_type": "Class", "value": "Wanderer"}, {"trait_type": "Origin", "value": "The Wreck"}]
+    },
+    "mc_3": {
+        "name": "The Seeker",
+        "description": "Driven by an insatiable curiosity for the village's secrets. Anchored on 0G.",
+        "attributes": [{"trait_type": "Class", "value": "Seeker"}, {"trait_type": "Origin", "value": "The Wreck"}]
+    },
+    "mc_4": {
+        "name": "The Ghost",
+        "description": "A silent observer who moves through the fog like a phantom. Anchored on 0G.",
+        "attributes": [{"trait_type": "Class", "value": "Stalker"}, {"trait_type": "Origin", "value": "The Wreck"}]
+    },
+    "mc_5": {
+        "name": "The Flame",
+        "description": "Possesses a fiery spirit that refuses to be extinguished by the gloom. Anchored on 0G.",
+        "attributes": [{"trait_type": "Class", "value": "Brawler"}, {"trait_type": "Origin", "value": "The Wreck"}]
+    },
+    "mc_6": {
+        "name": "The Knight",
+        "description": "Stands as a guardian against the shadows that haunt the borders. Anchored on 0G.",
+        "attributes": [{"trait_type": "Class", "value": "Guardian"}, {"trait_type": "Origin", "value": "The Wreck"}]
+    },
+    "mc_7": {
+        "name": "The Dreamer",
+        "description": "Sees visions of a world beyond the fog in every slumber. Anchored on 0G.",
+        "attributes": [{"trait_type": "Class", "value": "Mystic"}, {"trait_type": "Origin", "value": "The Wreck"}]
+    },
+    "mc_8": {
+        "name": "The Shadow",
+        "description": "One with the darkness, hearing what is whispered in the corners. Anchored on 0G.",
+        "attributes": [{"trait_type": "Class", "value": "Rogue"}, {"trait_type": "Origin", "value": "The Wreck"}]
+    },
+    "mc_9": {
+        "name": "The Verdant",
+        "description": "A friend to the few plants that still thrive in the village. Anchored on 0G.",
+        "attributes": [{"trait_type": "Class", "value": "Druid"}, {"trait_type": "Origin", "value": "The Wreck"}]
+    },
+    "mc_10": {
+        "name": "The Builder",
+        "description": "Finds meaning in creating structure amidst the chaos. Anchored on 0G.",
+        "attributes": [{"trait_type": "Class", "value": "Artisan"}, {"trait_type": "Origin", "value": "The Wreck"}]
+    }
+}

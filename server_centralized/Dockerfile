@@ -5,16 +5,22 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
+    nodejs \
+    npm \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
 COPY . .
 
-# Create data directory for persistence
 RUN mkdir -p data
 
-EXPOSE 3002
+# Railway injects $PORT at runtime; default to 8000 for local dev
+ENV PORT=8000
+EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3002"]
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT}

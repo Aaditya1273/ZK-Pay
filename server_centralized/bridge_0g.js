@@ -4,9 +4,9 @@ import fs from "fs/promises";
 import path from "path";
 import os from "os";
 
-const INDEXER_RPC = "https://indexer-storage-turbo.0g.ai";
-const EVM_RPC = "https://evmrpc-testnet.0g.ai";
-const FLOW_ADDRESS = "0x62d4144db0f0a6fbbaeb6296c785c71b3d57c526";
+const INDEXER_RPC = process.env.INDEXER_RPC || "https://indexer-storage-testnet-turbo.0g.ai";
+const EVM_RPC = process.env["0G_TESTNET_RPC"] || "https://evmrpc-testnet.0g.ai";
+const FLOW_ADDRESS = process.env.FLOW_ADDRESS || "0x62d4144db0f0a6fbbaeb6296c785c71b3d57c526";
 
 async function upload(filePath, privateKey) {
     const provider = new ethers.JsonRpcProvider(EVM_RPC);
@@ -21,8 +21,19 @@ async function upload(filePath, privateKey) {
     
     try {
         const flowContract = getFlowContract(FLOW_ADDRESS, signer);
-        const shardConfigs = await getShardConfigs(indexer);
-        const uploader = new Uploader([flowContract], provider, signer, shardConfigs, 0, 0);
+        
+        let shardConfigs;
+        try {
+            shardConfigs = await getShardConfigs(indexer);
+        } catch (e) {
+            console.error("Warning: getShardConfigs failed, using empty array:", e.message);
+            shardConfigs = [];
+        }
+
+        // 0.2.1 specific fix: ensure shardConfigs is iterable
+        const nodes = Array.isArray(shardConfigs) ? shardConfigs : [];
+        
+        const uploader = new Uploader([flowContract], provider, signer, nodes, 0, 0);
 
         const [_, uploadErr] = await uploader.uploadFile(zgFile, {
             tags: '0x',

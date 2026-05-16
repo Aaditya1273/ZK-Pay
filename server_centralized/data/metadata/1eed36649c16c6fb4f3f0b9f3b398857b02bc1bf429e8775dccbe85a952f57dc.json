@@ -1,0 +1,20 @@
+{
+  "name": "The Wanderer",
+  "description": "A solitary figure who has traveled far beyond the fog. Anchored on 0G.",
+  "attributes": [
+    {
+      "trait_type": "Class",
+      "value": "Wanderer"
+    },
+    {
+      "trait_type": "Origin",
+      "value": "The Wreck"
+    }
+  ],
+  "minted_at": "2026-05-16T08:03:16.834755",
+  "owner": "0x5ab3036c7d0ba7043e0bb531374dc6c732ec4954",
+  "status": "Active",
+  "origin": "Beyond The Fog - 0G Galileo Testnet",
+  "image": "http://localhost:8000/assets/avatars/mc_2.png",
+  "external_url": "https://beyondthefog.0g.ai"
+}
