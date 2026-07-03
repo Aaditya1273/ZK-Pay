@@ -1,0 +1,50 @@
+[package]
+name = "privacy-pool-core"
+version = "1.1.0"
+description = "ZK-PAY: Privacy Pool on Stellar — Compliant Private USDC Payments"
+edition = "2021"
+license = "Apache-2.0"
+authors = ["Wonderland (migrated to Stellar by ZK-Pay)"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+testutils = ["soroban-sdk/testutils"]
+
+[dependencies]
+soroban-sdk = { version = "21.0.0", features = ["testutils"] }
+
+[dev_dependencies]
+soroban-sdk = { version = "21.0.0", features = ["testutils"] }
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+lto = true
+debug = 0
+codegen-units = 1
+panic = "abort"
+
+[profile.test]
+opt-level = 0
+overflow-checks = true
+
+############################################################
+# ZK-PAY: MIGRATION NOTES
+# 
+# This Cargo.toml replaces:
+#   - foundry.toml (Solidity build config)
+#   - remappings.txt (import remappings)
+#   - solhint.json (Solidity lint config)
+#
+# Build with: cargo build --target wasm32-unknown-unknown --release
+# Test with:  cargo test
+# Deploy with: stellar contract deploy --wasm target/wasm32-unknown-unknown/release/privacy_pool_core.wasm
+#
+# Protocol 25/26 features are accessed via:
+#   env.crypto().poseidon2()    — Poseidon2 hash (ZK-friendly)
+#   env.crypto().bn254_*()     — BN254 curve operations
+#   env.crypto().sha256()      — SHA256 fallback
+#   TokenClient                — USDC transfers via Stellar Asset Contract
+############################################################
