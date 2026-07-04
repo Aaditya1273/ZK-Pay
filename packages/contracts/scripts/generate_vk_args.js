@@ -51,7 +51,8 @@ function g2ToHex(g2Point) {
     const x1Hex = bigintToHexPadded(x1, 48);
     const y0Hex = bigintToHexPadded(y0, 48);
     const y1Hex = bigintToHexPadded(y1, 48);
-    return x0Hex + x1Hex + y0Hex + y1Hex;
+    // Soroban BLS12-381 expects Fp2 as c1 || c0 (imaginary first, real second)
+    return x1Hex + x0Hex + y1Hex + y0Hex;
 }
 
 /**

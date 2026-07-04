@@ -30,6 +30,11 @@ Roadmap.md
 # External cloned repos
 privacy-pools-website/
 
+# Generated test artifacts
+packages/sdk/scripts/e2e-*.json
+packages/sdk/scripts/withdraw-*.json
+packages/contracts/vk_gen/
+
 # OS/Editor
 .DS_Store
 .vscode/*

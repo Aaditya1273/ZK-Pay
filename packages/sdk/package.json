@@ -52,6 +52,7 @@
     "@types/snarkjs": "0.7.9",
     "@zk-kit/lean-imt": "2.2.4",
     "async": "3.2.6",
+    "circomlibjs": "^0.1.7",
     "dotenv": "17.3.1",
     "maci-crypto": "2.5.0",
     "snarkjs": "0.7.5",

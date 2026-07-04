@@ -321,8 +321,12 @@ impl PrivacyPool {
             return Err(PrivacyPoolError::AllowlistMismatch);
         }
         
-        // Full Groth16 verification with VK
-        if !Self::_verify_groth16_full(&env, &proof.proof, &proof.pub_signals) {
+        // Full Groth16 verification with VK (first 8 signals from circuit)
+        let mut circuit_signals: Vec<BytesN<32>> = Vec::new(&env);
+        for i in 0..8 {
+            circuit_signals.push_back(proof.pub_signals.get(i).unwrap());
+        }
+        if !Self::_verify_groth16_full(&env, &proof.proof, &circuit_signals) {
             return Err(PrivacyPoolError::InvalidProof);
         }
         
@@ -563,12 +567,47 @@ impl PrivacyPool {
     
     fn _compute_context(env: &Env, withdrawal: &Withdrawal, scope: &BytesN<32>) -> BytesN<32> {
         // SHA256(data || scope)
-        // Cross-platform: both Rust Soroban and JS SDK trivially agree.
-        // Security: processooor enforced via require_auth() separately.
         let mut input = Bytes::new(env);
         input.append(&Bytes::from_array(env, &withdrawal.data.to_array()));
         input.append(&Bytes::from_array(env, &scope.to_array()));
-        env.crypto().sha256(&input).into()
+        let hash: BytesN<32> = env.crypto().sha256(&input).into();
+        // Reduce modulo BLS12-381 scalar field so that it fits as a circuit field element
+        let r: BytesN<32> = BytesN::from_array(env, &[
+            0x73, 0xed, 0xa7, 0x53, 0x29, 0x9d, 0x7d, 0x48,
+            0x33, 0x39, 0xd8, 0x08, 0x09, 0xa1, 0xd8, 0x05,
+            0x53, 0xbd, 0xa4, 0x02, 0xff, 0xfe, 0x5b, 0xfe,
+            0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x01,
+        ]);
+        Self::_reduce_bls_field(env, hash, r)
+    }
+    
+    fn _reduce_bls_field(env: &Env, a: BytesN<32>, r: BytesN<32>) -> BytesN<32> {
+        // Compare a >= r by iterating bytes
+        let a_arr = a.to_array();
+        let r_arr = r.to_array();
+        for i in 0..32 {
+            if a_arr[i] > r_arr[i] {
+                return Self::_bytes_sub(env, a_arr, r_arr);
+            }
+            if a_arr[i] < r_arr[i] { return a; }
+        }
+        BytesN::from_array(env, &[0u8; 32])
+    }
+    
+    fn _bytes_sub(env: &Env, a: [u8; 32], b: [u8; 32]) -> BytesN<32> {
+        let mut result = [0u8; 32];
+        let mut borrow: i32 = 0;
+        for i in (0..32).rev() {
+            let diff: i32 = a[i] as i32 - b[i] as i32 - borrow;
+            if diff < 0 {
+                result[i] = (diff + 256) as u8;
+                borrow = 1;
+            } else {
+                result[i] = diff as u8;
+                borrow = 0;
+            }
+        }
+        BytesN::from_array(env, &result)
     }
     
     // ══════════════════════════════════════════════════════════════
