@@ -1,10 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai"
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "")
+import { generateWithFallback } from "./ai"
 
 export async function generateDescription(idea: string): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
-  
   const prompt = `You are a professional OKX ASP service describer.
   Given the user's idea, write a 2-part description separated by a newline.
   Part 1: Core capability summary (what it does + who it's for).
@@ -20,7 +16,6 @@ export async function generateDescription(idea: string): Promise<string> {
   
   User Idea: ${idea}`
   
-  const result = await model.generateContent(prompt)
-  const response = result.response
-  return response.text().trim()
+  const text = await generateWithFallback(prompt)
+  return text.trim()
 }

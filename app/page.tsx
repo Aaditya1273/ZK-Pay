@@ -13,8 +13,8 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="font-bold text-xl tracking-tight">SHIPIT</div>
           <div className="flex items-center gap-4">
-            <Link href="/new" className="text-sm font-medium hover:text-primary transition-colors">
-              Dashboard
+            <Link href="/login" className="text-sm font-medium hover:text-primary transition-colors">
+              Sign In
             </Link>
           </div>
         </div>

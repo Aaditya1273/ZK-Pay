@@ -1,10 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai"
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "")
+import { generateWithFallback } from "./ai"
 
 export async function generatePricing(idea: string) {
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
-  
   const prompt = `You are an expert OKX ASP pricing strategist.
   Given the user's idea, estimate a fair market fee in USDT and design a full pricing model.
   
@@ -15,10 +11,8 @@ export async function generatePricing(idea: string) {
   
   User Idea: ${idea}`
   
-  const result = await model.generateContent(prompt)
-  const text = result.response.text()
-  
   try {
+    const text = await generateWithFallback(prompt)
     return JSON.parse(text.replace(/```json/g, "").replace(/```/g, "").trim())
   } catch (e) {
     return {

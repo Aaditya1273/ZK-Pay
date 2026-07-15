@@ -1,9 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import { generateWithFallback } from "./ai"
 
 export async function generateMarketing(idea: string) {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "")
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
-
   const prompt = `You are an OKX.AI expert. Based on this agent idea: "${idea}", generate a marketing kit.
 Return JSON ONLY. Format:
 {
@@ -11,8 +8,7 @@ Return JSON ONLY. Format:
   "launchAnnouncement": "string"
 }`
 
-  const result = await model.generateContent(prompt)
-  const text = result.response.text()
+  const text = await generateWithFallback(prompt)
   
   try {
     return JSON.parse(text.replace(/```json/g, "").replace(/```/g, "").trim())

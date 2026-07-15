@@ -1,13 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   experimental: {
     serverActions: {
       bodySizeLimit: "2mb",
     },
   },
   images: {
-    domains: ["web3.okx.com"],
+    remotePatterns: [
+      { protocol: "https", hostname: "web3.okx.com" },
+    ],
   },
 };
 

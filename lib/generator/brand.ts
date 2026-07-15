@@ -1,11 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai"
-
-// We assume process.env.GEMINI_API_KEY is set
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "")
+import { generateWithFallback } from "./ai"
 
 export async function generateBrandName(idea: string): Promise<string> {
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
-  
   const prompt = `You are a professional OKX ASP brand namer. 
   Given the user's idea, output a 3-25 character professional brand name.
   CRITICAL RULES:
@@ -15,7 +10,6 @@ export async function generateBrandName(idea: string): Promise<string> {
   
   User Idea: ${idea}`
   
-  const result = await model.generateContent(prompt)
-  const response = result.response
-  return response.text().trim().replace(/^"|"$/g, "")
+  const text = await generateWithFallback(prompt)
+  return text.trim().replace(/^"|"$/g, "")
 }

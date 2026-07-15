@@ -9,9 +9,23 @@ import { generateMarketing } from "@/lib/generator/marketing"
 import { validateName } from "@/lib/validator/name"
 import { validateDescription } from "@/lib/validator/description"
 import { validateFee } from "@/lib/validator/fee"
+import { checkRateLimit } from "@/lib/rate-limit"
 
 export async function POST(req: NextRequest) {
   const { idea, apiKey } = await req.json()
+
+  // Rate limiting
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
+  const rateLimit = checkRateLimit(ip)
+  if (!rateLimit.allowed) {
+    return new Response(JSON.stringify({ error: "Too many requests. Please wait before generating again." }), {
+      status: 429,
+      headers: {
+        "Retry-After": String(Math.ceil(rateLimit.resetIn / 1000)),
+        "X-RateLimit-Remaining": "0",
+      },
+    })
+  }
   
   if (!idea) {
     return new Response(JSON.stringify({ error: "Idea is required" }), { status: 400 })

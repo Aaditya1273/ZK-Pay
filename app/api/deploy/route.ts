@@ -1,10 +1,58 @@
 import { NextRequest } from "next/server"
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import { getToken } from "next-auth/jwt"
+import { generateWithFallback } from "@/lib/generator/ai"
 import { runUpload } from "@/lib/okx/upload"
 import { runCreate } from "@/lib/okx/create"
 import { runActivate } from "@/lib/okx/activate"
+import { checkRateLimit } from "@/lib/rate-limit"
+import { prisma } from "@/lib/prisma"
+import { PLAN_TIERS, type PlanTier } from "@/constants/pricing"
 
 export async function POST(req: NextRequest) {
+  // Rate limiting
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
+  const rateLimit = checkRateLimit(ip)
+  if (!rateLimit.allowed) {
+    return new Response(JSON.stringify({ error: "Too many requests. Please wait before deploying again." }), {
+      status: 429,
+      headers: {
+        "Retry-After": String(Math.ceil(rateLimit.resetIn / 1000)),
+        "X-RateLimit-Remaining": "0",
+      },
+    })
+  }
+
+  // Authenticate & enforce plan limits server-side
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  const userId = token?.sub
+  if (!userId) {
+    return new Response(JSON.stringify({ error: "Authentication required. Please sign in to deploy agents." }), {
+      status: 401,
+    })
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { agents: true },
+  })
+
+  if (!user) {
+    return new Response(JSON.stringify({ error: "User not found." }), { status: 401 })
+  }
+
+  const plan = (user.plan as PlanTier) || "free"
+  const planConfig = PLAN_TIERS[plan]
+  const agentCount = user.agents.length
+
+  if (planConfig.maxDeployments !== -1 && agentCount >= planConfig.maxDeployments) {
+    return new Response(
+      JSON.stringify({
+        error: `Free tier limited to ${planConfig.maxDeployments} deployments. Upgrade to Pro for unlimited deployments.`,
+      }),
+      { status: 403 }
+    )
+  }
+
   const { payload, apiKey, secretKey, passphrase, geminiApiKey } = await req.json()
   
   if (!payload) {
@@ -79,11 +127,9 @@ export async function POST(req: NextRequest) {
           await sendEvent("step", { id: "6", label: "Smart Fix™ repairing payload...", status: "loading" })
           
           try {
-            const genAI = new GoogleGenerativeAI(geminiKey)
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
             const fixPrompt = `OKX CLI rejected ASP agent creation with this error:\n${e.message}\n\nAgent Name: ${name}\nCurrent Description:\n${currentDesc}\n\nFix the description to pass OKX validation. Rules:\n- Max 400 chars\n- 2 parts: capability summary + required inputs\n- No links, addresses, tech stack, or markdown\nReturn ONLY the fixed plain text.`
-            const fixResult = await model.generateContent(fixPrompt)
-            currentDesc = fixResult.response.text().trim()
+            const fixResult = await generateWithFallback(fixPrompt)
+            currentDesc = fixResult.trim()
           } catch {
             currentDesc = description // Fall back to original
           }
@@ -91,6 +137,19 @@ export async function POST(req: NextRequest) {
       }
       
       await runActivate(agentId, chain)
+
+      // Save agent to database so plan enforcement count stays accurate
+      await prisma.agent.create({
+        data: {
+          name,
+          description: currentDesc,
+          fee,
+          avatarUrl: finalAvatarUrl,
+          agentId,
+          userId,
+        },
+      })
+
       await sendEvent("step", { id: "6", label: `Activated Agent #${agentId}`, status: "success" })
 
       await sendEvent("done", { agentId, name, description: currentDesc, fee, avatarUrl: finalAvatarUrl })

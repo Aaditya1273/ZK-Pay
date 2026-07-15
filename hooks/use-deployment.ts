@@ -50,6 +50,12 @@ export function useDeployment() {
           geminiApiKey: typeof window !== "undefined" ? localStorage.getItem("GEMINI_API_KEY") || "" : "",
         })
       })
+
+      // Handle non-200 responses (e.g., 429 rate limit)
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
+        throw new Error(errBody.error || `Request failed (${res.status})`)
+      }
       
       if (!res.body) throw new Error("No response body")
       

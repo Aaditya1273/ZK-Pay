@@ -23,6 +23,12 @@ export function useGeneration() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idea, apiKey })
       })
+
+      // Handle non-200 responses (e.g., 429 rate limit)
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
+        throw new Error(errBody.error || `Request failed (${res.status})`)
+      }
       
       if (!res.body) throw new Error("No response body")
       
