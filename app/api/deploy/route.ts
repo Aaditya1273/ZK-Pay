@@ -31,35 +31,20 @@ export async function POST(req: NextRequest) {
       // Upload Avatar if it's a local file path
       let finalAvatarUrl = avatarPath
       if (avatarPath.startsWith("/")) {
-        try {
-          finalAvatarUrl = await runUpload(avatarPath)
-        } catch (e) {
-          console.warn("CLI not installed or failed, using mock upload URL")
-          finalAvatarUrl = "https://example.com/avatar.png"
-        }
+        finalAvatarUrl = await runUpload(avatarPath)
       }
 
       // 5. Precheck & Validation
       await sendEvent("step", { id: "5", label: "Running OKX Validations", status: "loading" })
-      try {
-        await runPrecheck()
-        const services = [{ name: `${name} Service`, description, type: "A2MCP", fee, endpoint: "https://example.com/api" }]
-        await runValidateListing(name, description, services)
-      } catch (e) {
-        console.warn("CLI not installed or failed, skipping hard OKX validation")
-      }
+      await runPrecheck()
+      const services = [{ name: `${name} Service`, description, type: "A2MCP", fee, endpoint: "https://example.com/api" }]
+      await runValidateListing(name, description, services)
       await sendEvent("step", { id: "5", label: "Validation passed", status: "success" })
       
       // 6. Create & Activate
       await sendEvent("step", { id: "6", label: "Registering Identity On-Chain", status: "loading" })
-      let agentId = "mock-agent-123"
-      try {
-        const services = [{ name: `${name} Service`, description, type: "A2MCP", fee, endpoint: "https://example.com/api" }]
-        agentId = await runCreate(name, description, finalAvatarUrl, services)
-        await runActivate(agentId)
-      } catch (e) {
-        console.warn("CLI not installed or failed, skipping real create/activate")
-      }
+      const agentId = await runCreate(name, description, finalAvatarUrl, services)
+      await runActivate(agentId)
       await sendEvent("step", { id: "6", label: `Registered Agent #${agentId}`, status: "success" })
 
       // Final complete signal

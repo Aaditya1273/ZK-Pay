@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { useEffect } from "react"
 import { useShipitStore } from "@/stores/shipit.store"
 import { useDeployment } from "@/hooks/use-deployment"
@@ -17,6 +18,8 @@ export default function DeployPage() {
     return acc
   }, 0)
 
+  const hasDeployed = React.useRef(false)
+
   useEffect(() => {
     if (!generatedPayload) {
       router.push("/new")
@@ -24,7 +27,8 @@ export default function DeployPage() {
     }
     
     // Auto-start deployment when landing on this page
-    if (!isDeploying && score === 0) {
+    if (!isDeploying && score === 0 && !hasDeployed.current) {
+      hasDeployed.current = true
       deploy()
     }
   }, [generatedPayload, isDeploying, score, deploy, router])
