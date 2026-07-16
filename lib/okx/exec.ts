@@ -16,8 +16,12 @@ export async function execWithProxy(command: string): Promise<string> {
   const npmGlobalBin = path.join(homeDir, ".npm-global", "bin")
   // okx-a2a is installed via npx and lives in the npx cache
   const npxCacheBin = path.join(homeDir, ".npm", "_npx", "4e765b6729538b84", "node_modules", ".bin")
+  
+  // Vercel deployment support: use the bundled binary in the project's /bin directory
+  const projectBin = path.join(process.cwd(), "bin")
+  
   const currentPath = process.env.PATH || ""
-  const extendedPath = [localBin, npmGlobalBin, npxCacheBin, currentPath]
+  const extendedPath = [projectBin, localBin, npmGlobalBin, npxCacheBin, currentPath]
     .filter(Boolean)
     .join(":")
 
