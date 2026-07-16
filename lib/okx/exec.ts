@@ -46,9 +46,16 @@ export async function execWithProxy(command: string): Promise<string> {
     env: {
       ...process.env,
       PATH: extendedPath,
-      // Vercel read-only filesystem fix: tell onchainos CLI that HOME is /tmp
-      // so it can successfully create the ~/.onchainos folder.
-      ...(process.env.VERCEL && { HOME: "/tmp" }),
+      // Vercel read-only filesystem fix:
+      // onchainos CLI creates ~/.onchainos/ for its config.
+      // On Vercel, HOME is read-only, but /tmp is always writable.
+      // ONCHAINOS_HOME overrides the config dir directly.
+      ...(process.env.VERCEL && {
+        HOME: "/tmp",
+        ONCHAINOS_HOME: "/tmp/.onchainos",
+        XDG_CACHE_HOME: "/tmp/.cache",
+        XDG_CONFIG_HOME: "/tmp/.config",
+      }),
       // Only pass proxy vars when actually set — empty strings can confuse
       // Rust-based CLIs like onchainos
       ...(process.env.HTTPS_PROXY && { HTTPS_PROXY: process.env.HTTPS_PROXY }),
