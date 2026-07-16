@@ -90,12 +90,14 @@ export function useDeployment() {
                   updateDeploymentStep(data.id, data.status, data.label)
                 } else if (currentEvent === "done") {
                   addDeployedAgent({
-                    id: data.agentId,
+                    id: data.agentId || data.txHash,
                     name: data.name,
                     description: data.description,
                     fee: data.fee,
                     status: "ready",
-                    avatarUrl: data.avatarUrl
+                    avatarUrl: data.avatarUrl,
+                    txHash: data.txHash,
+                    explorerUrl: data.explorerUrl,
                   })
                   router.push("/success")
                 } else if (currentEvent === "error") {
