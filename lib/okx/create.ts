@@ -1,7 +1,9 @@
-import { exec } from "child_process"
-import { promisify } from "util"
+import { execWithProxy } from "./exec"
 
-const execAsync = promisify(exec)
+export interface CreateResult {
+  agentId: string | null
+  txHash: string | null
+}
 
 export async function runCreate(
   name: string,
@@ -9,15 +11,22 @@ export async function runCreate(
   pictureUrl: string,
   services: any[],
   chain: string = "ethereum"
-): Promise<string> {
+): Promise<CreateResult> {
   try {
     const servicesJson = JSON.stringify(services).replace(/"/g, '\\"')
     const cmd = `onchainos agent create --role asp --name "${name}" --description "${description}" --picture "${pictureUrl}" --service "${servicesJson}" --chain "${chain}"`
-    
-    const { stdout } = await execAsync(cmd)
-    // The CLI prints the new agentId upon success
-    return stdout.trim()
+    const stdout = await execWithProxy(cmd)
+    const parsed = JSON.parse(stdout)
+    if (parsed?.ok === false) {
+      throw new Error(parsed.error || "Agent creation failed")
+    }
+    return {
+      agentId: parsed?.data?.newAgentId ?? null,
+      txHash: parsed?.data?.txHash ?? null,
+    }
   } catch (error: any) {
-    throw new Error(`Failed to create agent: ${error.message}`)
+    if (error.message?.startsWith("Failed to create agent")) throw error
+    const details = error.stderr || error.stdout || ""
+    throw new Error(`Failed to create agent: ${error.message} \nDetails: ${details}`)
   }
 }

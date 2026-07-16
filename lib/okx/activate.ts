@@ -1,7 +1,4 @@
-import { exec } from "child_process"
-import { promisify } from "util"
-
-const execAsync = promisify(exec)
+import { execWithProxy } from "./exec"
 
 export async function runActivate(
   agentId: string,
@@ -9,8 +6,18 @@ export async function runActivate(
   preferredLanguage: string = "en-US"
 ): Promise<void> {
   try {
-    await execAsync(`onchainos agent activate --agent-id "${agentId}" --chain "${chain}" --preferred-language "${preferredLanguage}"`)
+    const stdout = await execWithProxy(`onchainos agent activate --agent-id "${agentId}" --chain "${chain}" --preferred-language "${preferredLanguage}"`)
+    const parsed = JSON.parse(stdout).catch?.(() => null) || (() => { try { return JSON.parse(stdout) } catch { return null } })()
+    if (parsed?.ok === false) {
+      throw new Error(parsed.error || "Activation failed")
+    }
   } catch (error: any) {
-    throw new Error(`Failed to activate agent: ${error.message}`)
+    const raw = error.stderr || error.stdout || error.message || ""
+    // Try to extract a clean error from JSON output
+    try {
+      const parsed = JSON.parse(raw)
+      if (parsed?.ok === false) throw new Error(parsed.error)
+    } catch {}
+    throw new Error(`Failed to activate agent: ${raw}`)
   }
 }
