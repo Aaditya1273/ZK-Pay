@@ -10,7 +10,6 @@ import { validateName } from "@/lib/validator/name"
 import { validateDescription } from "@/lib/validator/description"
 import { validateFee } from "@/lib/validator/fee"
 import { checkRateLimit } from "@/lib/rate-limit"
-import { runUpload } from "@/lib/okx/upload"
 
 export async function POST(req: NextRequest) {
   const { idea, apiKey } = await req.json()
@@ -76,13 +75,10 @@ export async function POST(req: NextRequest) {
       if (!feeVal.success) throw new Error(`Fee validation failed: ${feeVal.error.errors[0].message}`)
       await sendEvent("step", { id: "3", label: `Fee: ${pricingObj.fee} USDT`, status: "success" })
       
-      // 4. Generate Avatar
+      // 4. Generate Avatar (returns a public https:// URL — no disk I/O)
       await sendEvent("step", { id: "4", label: "Generating Identity Avatar", status: "loading" })
-      let avatarPath = await generateAvatar(name)
-      if (avatarPath && avatarPath.startsWith("/")) {
-         avatarPath = await runUpload(avatarPath, "ethereum")
-      }
-      await sendEvent("step", { id: "4", label: "Avatar Generated & Uploaded", status: "success" })
+      const avatarPath = await generateAvatar(name)
+      await sendEvent("step", { id: "4", label: "Avatar Generated", status: "success" })
 
       // Final signal for generation complete
       await sendEvent("done", { 
