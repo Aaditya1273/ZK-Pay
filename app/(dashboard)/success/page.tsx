@@ -4,7 +4,7 @@ import { useShipitStore } from "@/stores/shipit.store"
 import { useRouter } from "next/navigation"
 import { AppShowcaseCard } from "@/components/dashboard/AppShowcaseCard"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, CheckCircle2, Sparkles } from "lucide-react"
+import { PlusCircle, CheckCircle2, Sparkles, ExternalLink } from "lucide-react"
 import confetti from "canvas-confetti"
 import { useEffect } from "react"
 import { ReadmeViewer } from "@/components/viewers/readme-viewer"
@@ -73,9 +73,25 @@ export default function SuccessPage() {
         </div>
       </motion.div>
 
-      {/* Agent card */}
-      <motion.div variants={item} className="max-w-sm mx-auto">
+      {/* Agent card + on-chain proof */}
+      <motion.div variants={item} className="max-w-sm mx-auto space-y-4">
         <AppShowcaseCard asp={latestAgent} />
+        {latestAgent.explorerUrl && (
+          <a
+            href={latestAgent.explorerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full rounded-xl border border-[#7C5CFC]/30 bg-[#7C5CFC]/5 hover:bg-[#7C5CFC]/10 px-4 py-3 text-sm font-medium text-[#7C5CFC] transition-all"
+          >
+            <ExternalLink className="w-4 h-4" />
+            View On-Chain Proof on OKX Explorer
+          </a>
+        )}
+        {latestAgent.txHash && (
+          <p className="text-center text-[11px] text-gray-400 font-mono break-all">
+            tx: {latestAgent.txHash}
+          </p>
+        )}
       </motion.div>
 
       {/* Actions */}

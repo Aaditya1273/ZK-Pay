@@ -139,7 +139,15 @@ export async function POST(req: NextRequest) {
         }
       }
       
-      await runActivate(agentId, chain)
+      // Activate — non-fatal: agent is already on-chain after create.
+      // If okx-a2a is not running or reachable, we still mark success.
+      let activationWarning: string | null = null
+      try {
+        await runActivate(agentId, chain)
+      } catch (activateErr: any) {
+        activationWarning = activateErr.message
+        console.warn("[deploy] Activation skipped:", activationWarning)
+      }
 
       // Save agent to database so plan enforcement count stays accurate
       await prisma.agent.create({
