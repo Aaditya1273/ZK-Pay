@@ -1,11 +1,24 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import localFont from "next/font/local"
 import { Toaster } from "sonner"
 import { ThemeProvider } from "@/components/theme-provider"
 import { SessionProvider } from "@/components/auth/SessionProvider"
+import { AuthModal } from "@/components/auth/AuthModal"
 import "./globals.css"
 
-const inter = Inter({ subsets: ["latin"] })
+const geistSans = localFont({
+  src: "../node_modules/geist/dist/fonts/geist-sans/Geist-Variable.woff2",
+  variable: "--font-geist-sans",
+  display: "swap",
+  weight: "100 900",
+})
+
+const geistMono = localFont({
+  src: "../node_modules/geist/dist/fonts/geist-mono/GeistMono-Variable.woff2",
+  variable: "--font-geist-mono",
+  display: "swap",
+  weight: "100 900",
+})
 
 export const metadata: Metadata = {
   title: "SHIPIT — Zero-Touch Deployment for OKX.AI",
@@ -21,16 +34,17 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body>
         <SessionProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="light"
+              enableSystem
+              disableTransitionOnChange
           >
             {children}
+            <AuthModal />
             <Toaster theme="dark" />
           </ThemeProvider>
         </SessionProvider>

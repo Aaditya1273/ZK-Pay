@@ -94,18 +94,21 @@ export async function POST(req: NextRequest) {
       let currentDesc = description
       const dynamicEndpoint = `https://api.${name.toLowerCase().replace(/[^a-z0-9]/g, "")}.com/v1`
       let agentId = ""
+      let txHash = ""
       let createAttempts = 0
       const MAX_ATTEMPTS = 3
 
       while (createAttempts < MAX_ATTEMPTS) {
         try {
-          const services = [{ name: `${name} Service`, description: currentDesc, type: "A2MCP", fee, endpoint: dynamicEndpoint }]
+          const services = [{ serviceName: `${name} Service`, serviceDescription: currentDesc, serviceType: "A2MCP", fee, endpoint: dynamicEndpoint }]
           await sendEvent("step", { 
             id: "6", 
             label: `Registering Identity On-Chain${createAttempts > 0 ? ` (Attempt ${createAttempts + 1}/${MAX_ATTEMPTS})` : ""}`, 
             status: "loading" 
           })
-          agentId = await runCreate(name, currentDesc, finalAvatarUrl, services, chain)
+          const createResult = await runCreate(name, currentDesc, finalAvatarUrl, services, chain)
+          agentId = createResult.agentId || createResult.txHash || ""
+          txHash = createResult.txHash || ""
           break // Success
         } catch (e: any) {
           createAttempts++
@@ -150,9 +153,10 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      await sendEvent("step", { id: "6", label: `Activated Agent #${agentId}`, status: "success" })
+      const explorerUrl = txHash ? `https://www.okx.com/web3/explorer/eth/tx/${txHash}` : null
+      await sendEvent("step", { id: "6", label: `Activated on-chain ✓`, status: "success" })
 
-      await sendEvent("done", { agentId, name, description: currentDesc, fee, avatarUrl: finalAvatarUrl })
+      await sendEvent("done", { agentId, txHash, explorerUrl, name, description: currentDesc, fee, avatarUrl: finalAvatarUrl })
     } catch (error: any) {
       await sendEvent("error", { message: error.message || "Deployment failed" })
     } finally {

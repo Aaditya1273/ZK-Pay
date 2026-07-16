@@ -4,7 +4,7 @@ import { useShipitStore } from "@/stores/shipit.store"
 import { useRouter } from "next/navigation"
 import { AppShowcaseCard } from "@/components/dashboard/AppShowcaseCard"
 import { Button } from "@/components/ui/button"
-import { PlusCircle } from "lucide-react"
+import { PlusCircle, CheckCircle2, Sparkles } from "lucide-react"
 import confetti from "canvas-confetti"
 import { useEffect } from "react"
 import { ReadmeViewer } from "@/components/viewers/readme-viewer"
@@ -14,67 +14,104 @@ import { DemoScriptViewer } from "@/components/viewers/demo-script-viewer"
 import { PitchViewer } from "@/components/viewers/pitch-viewer"
 import { FullDocsViewer } from "@/components/viewers/docs-viewer"
 import { ExportRepoButton } from "@/components/viewers/export-button"
+import { motion } from "framer-motion"
 
 export default function SuccessPage() {
   const router = useRouter()
   const { deployedAgents, resetPipeline, generatedPayload } = useShipitStore()
-  
+
   const latestAgent = deployedAgents[0]
 
   useEffect(() => {
     if (latestAgent) {
       confetti({
-        particleCount: 150,
-        spread: 80,
-        origin: { y: 0.6 }
+        particleCount: 200,
+        spread: 100,
+        origin: { y: 0.5 },
+        colors: ["#6d28d9", "#7c3aed", "#8b5cf6", "#a78bfa", "#c4b5fd"],
       })
     }
   }, [latestAgent])
 
   if (!latestAgent || !generatedPayload) {
     return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <p>No recent deployments found.</p>
-        <Button onClick={() => router.push("/new")} className="mt-4">Go to New</Button>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+        <p className="text-muted-foreground">No recent deployments found.</p>
+        <Button onClick={() => router.push("/new")} className="mt-2 rounded-xl">Go to New</Button>
       </div>
     )
   }
 
-  return (
-    <div className="space-y-12 pb-16">
-      <div className="text-center space-y-4">
-        <div className="inline-flex items-center justify-center p-3 bg-green-100 text-green-700 rounded-full mb-2">
-          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-        </div>
-        <h1 className="text-4xl font-bold tracking-tight">Deployment Successful!</h1>
-        <p className="text-xl text-muted-foreground">Your agent is now live and registered on-chain.</p>
-      </div>
-      
-      <div className="max-w-md mx-auto">
-        <AppShowcaseCard asp={latestAgent} />
-      </div>
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 },
+    },
+  }
 
-      <div className="flex justify-center gap-4">
-        <Button variant="outline" onClick={() => { resetPipeline(); router.push("/history") }}>
+  const item = {
+    hidden: { y: 20, opacity: 0 },
+    show: { y: 0, opacity: 1, transition: { duration: 0.5 } },
+  }
+
+  return (
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="space-y-12 pb-16"
+    >
+      {/* Success header */}
+      <motion.div variants={item} className="text-center space-y-6">
+        <div className="inline-flex items-center justify-center p-4 bg-green-500/10 text-green-500 rounded-2xl">
+          <CheckCircle2 className="w-12 h-12" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold tracking-tight">Deployment Successful!</h1>
+          <p className="text-xl text-muted-foreground/80">Your agent is now live and registered on-chain.</p>
+        </div>
+      </motion.div>
+
+      {/* Agent card */}
+      <motion.div variants={item} className="max-w-sm mx-auto">
+        <AppShowcaseCard asp={latestAgent} />
+      </motion.div>
+
+      {/* Actions */}
+      <motion.div variants={item} className="flex justify-center gap-4">
+        <Button
+          variant="outline"
+          onClick={() => { resetPipeline(); router.push("/history") }}
+          className="rounded-xl h-11 px-6"
+        >
           View Dashboard
         </Button>
-        <Button onClick={() => { resetPipeline(); router.push("/new") }}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Deploy Another
+        <Button
+          onClick={() => { resetPipeline(); router.push("/new") }}
+          className="rounded-xl h-11 px-6 gap-2"
+        >
+          <PlusCircle className="mr-1 h-4 w-4" /> Deploy Another
         </Button>
-      </div>
+      </motion.div>
 
-      <div className="max-w-md mx-auto mt-4">
+      {/* Export repo */}
+      <motion.div variants={item} className="max-w-sm mx-auto">
         <ExportRepoButton payload={generatedPayload} />
-      </div>
+      </motion.div>
 
-      <div className="mt-16 space-y-8">
-        <h3 className="text-2xl font-bold tracking-tight border-b pb-4">Deployment Assets</h3>
-        
+      {/* Deployment Assets */}
+      <motion.div variants={item} className="mt-16 space-y-8">
+        <div className="flex items-center gap-3 pb-4 border-b border-border/60">
+          <Sparkles className="w-5 h-5 text-primary" />
+          <h3 className="text-2xl font-bold tracking-tight">Deployment Assets</h3>
+        </div>
+
         <div className="grid md:grid-cols-2 gap-6 h-96">
           <DemoScriptViewer agentId={latestAgent.id} />
           <XPostViewer payload={generatedPayload} />
         </div>
-        
+
         <div className="grid md:grid-cols-2 gap-6 h-[500px]">
           <ReadmeViewer payload={generatedPayload} />
           <FullDocsViewer payload={generatedPayload} />
@@ -84,7 +121,7 @@ export default function SuccessPage() {
           <PitchViewer payload={generatedPayload} />
           <PayloadViewer payload={generatedPayload} />
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
